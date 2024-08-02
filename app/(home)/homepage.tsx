@@ -29,7 +29,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Menu, Search } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 const supabase = createClerkSupabaseClient();
 
@@ -42,7 +42,6 @@ interface Item {
 }
 
 export const HomePage = () => {
-
   const router = useRouter();
 
   const { isSignedIn, user } = useUser();
@@ -51,7 +50,6 @@ export const HomePage = () => {
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-
 
   const handleClick = (name: string) => {
     const lowercasedName = name.toLowerCase();
@@ -72,7 +70,6 @@ export const HomePage = () => {
         }
 
         if (!existingUser) {
-         
           const { data, error } = await supabase.from("User").insert([
             {
               id: user.id,
@@ -135,7 +132,10 @@ export const HomePage = () => {
     setQuantity("");
   };
   const handleEditItem = async (id: number) => {
-    const { error } = await supabase.from("Item").update({name: itemName, count: quantity}).eq("id", id);
+    const { error } = await supabase
+      .from("Item")
+      .update({ name: itemName, count: quantity })
+      .eq("id", id);
 
     if (error) {
       console.error("Error updating item:", error);
@@ -143,7 +143,7 @@ export const HomePage = () => {
       console.log("Item updated successfully. item id: ");
       setItems(items.filter((item) => item.id !== id));
     }
-  }; 
+  };
   const handleRemoveItem = async (id: number) => {
     const { error } = await supabase.from("Item").delete().eq("id", id);
 
@@ -212,15 +212,22 @@ export const HomePage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {filteredData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center">
-                        <span className="loading loading-spinner loading-lg"></span>
+                        {loading ? (
+                          <span className="loading loading-spinner loading-lg"></span>
+                        ) : (
+                          <p>You have no items yet.</p>
+                        )}
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredData.map((item, index) => (
-                      <TableRow key={index} className="text-primary-100 font-medium ">
+                      <TableRow
+                        key={index}
+                        className="text-primary-100 font-medium "
+                      >
                         <TableCell className="font-semibold">
                           {item.name}
                         </TableCell>
@@ -228,8 +235,8 @@ export const HomePage = () => {
                           <Badge variant="outline">{item.count}</Badge>
                         </TableCell>
                         {/* <TableCell>${item.count * 10}.00</TableCell>{" "} */}
-                       
-                        <TableCell>{item.created_at.split('T')[0]}</TableCell> 
+
+                        <TableCell>{item.created_at.split("T")[0]}</TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -245,9 +252,11 @@ export const HomePage = () => {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuItem
-                              onClick={() => handleClick(item.name)}
-                              >View</DropdownMenuItem>
-                              
+                                onClick={() => handleClick(item.name)}
+                              >
+                                View
+                              </DropdownMenuItem>
+
                               <DropdownMenuItem
                                 onClick={() => handleRemoveItem(item.id)}
                               >
