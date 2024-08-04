@@ -45,15 +45,15 @@ export const HomePage = () => {
   const router = useRouter();
 
   const { isSignedIn, user } = useUser();
-  const [itemName, setItemName] = useState("");
+  const [itemName, setItemName] = useState<string>("");
   const [quantity, setQuantity] = useState("");
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [isPantryItem, setIsPantryItem] = useState(false);
   const handleClick = (name: string) => {
     const lowercasedName = name.toLowerCase();
-    router.push(`/${lowercasedName}`);
+    router.push(`/view/${lowercasedName}`);
   };
 
   useEffect(() => {
@@ -108,9 +108,42 @@ export const HomePage = () => {
     setSearch(e.target.value);
   };
 
+  const checkIfPantryItem = async (item: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/check_pantry_item`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ item: item }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch response");
+      }
+
+      const data = await response.json();
+      console.log(data);
+
+      // Assume that `data.response` is a boolean indicating if the item is valid.
+      return data.response === "true";
+    } catch (error) {
+      console.error(error);
+      alert("Failed to check pantry item");
+      return false;
+    }
+  };
+
   const handleAddItem = async () => {
     if (!itemName.trim() || !quantity.trim()) {
       alert("Item name and quantity cannot be empty.");
+      return;
+    }
+
+    const isPantryItem = await checkIfPantryItem(itemName);
+
+    if (!isPantryItem) {
+      alert("Please enter a valid pantry item.");
       return;
     }
 
@@ -131,6 +164,7 @@ export const HomePage = () => {
     setItemName("");
     setQuantity("");
   };
+
   const handleEditItem = async (id: number) => {
     const { error } = await supabase
       .from("Item")
@@ -164,7 +198,7 @@ export const HomePage = () => {
   return (
     <>
       <div className="p-12">
-        <div className="container max-w-5xl bg-primary rounded-md p-12 mt-4">
+        <div className="container xl:min-h-[80vh] max-w-5xl bg-primary rounded-xl p-12 mt-4">
           <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
             <div className="flex items-center gap-4 bg-secondary rounded-lg p-4 shadow-sm">
               <div className="relative flex-1">
@@ -215,7 +249,9 @@ export const HomePage = () => {
                   {filteredData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center">
-                        {loading ? (
+                        {!isSignedIn ? (
+                          <p>Not signed in</p>
+                        ) : loading ? (
                           <span className="loading loading-spinner loading-lg"></span>
                         ) : (
                           <p>You have no items yet.</p>
